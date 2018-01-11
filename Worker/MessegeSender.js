@@ -89,55 +89,59 @@ module.exports.SendMessage = function (event) {
     //console.log(event.message.outmessage.message);
     //console.log(event.to.id);
 
-    /*var obj = JSON.stringify({
-        token:SLACKbotToken,
-        channel : event.to.id,
-        text: 'Would you like to play a game?',
-        attachments: [
-            {
-                text: "Choose a game to play",
-                fallback: "You are unable to choose a game",
-                callback_id: "wopr_game",
-                color: "#3AA3E3",
-                attachment_type: "default",
-                actions: [
-                    {
-                        name: "game",
-                        text: "dwdsd",
-                        type: "button",
-                        value: "chess"
-                    },
-                    {
-                        name: "game",
-                        text: "Falken's Maze",
-                        type: "button",
-                        value: "maze"
-                    },
-                    {
-                        "name": "game",
-                        "text": "Thermonuclear War",
-                        "style": "danger",
-                        "type": "button",
-                        "value": "war",
-                        "confirm": {
-                            "title": "Are you sure?",
-                            "text": "Wouldn't you prefer a good game of chess?",
-                            "ok_text": "Yes",
-                            "dismiss_text": "No"
-                        }
+    /*let obj = [
+        {
+            "text": "Choose a game to play",
+            "fallback": "You are unable to choose a game",
+            "callback_id": "wopr_game",
+            "color": "#3AA3E3",
+            "attachment_type": "default",
+            "actions": [
+                {
+                    "name": "game",
+                    "text": "dwdsd",
+                    "type": "button",
+                    "value": "chess"
+                },
+                {
+                    "name": "game",
+                    "text": "Falken's Maze",
+                    "type": "button",
+                    "value": "maze"
+                },
+                {
+                    "name": "game",
+                    "text": "Thermonuclear War",
+                    "style": "danger",
+                    "type": "button",
+                    "value": "war",
+                    "confirm": {
+                        "title": "Are you sure?",
+                        "text": "Wouldn't you prefer a good game of chess?",
+                        "ok_text": "Yes",
+                        "dismiss_text": "No"
                     }
-                ]
-            }
-        ]
-    });*/
+                }
+            ]
+        }
+    ];*/
+
+
 
     request({
-        url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
-        method: 'GET',
+        //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
+        url: 'https://slack.com/api/chat.postMessage',
+
+        method: 'POST',
         headers :{
             'Content-Type':'application/x-www-form-urlencoded'
+        },
+        form: {
+            token :SLACKbotToken,
+            channel :event.to.id,
+            text: event.message.outmessage.message,
+            //attachments :JSON.stringify(obj)
         }
-        //body: obj
     }, function (error, response) {
 
         if (error) {
@@ -151,6 +155,65 @@ module.exports.SendMessage = function (event) {
     });
 
 
+};
+
+module.exports.SendCard = function (event) {
+    let SLACKbotToken = GETSLACKbotToken(event);
+    if (SLACKbotToken === "N/A"){
+        return;
+    }
+
+    let sender = event.from.id;
+    let tenant = event.session.bot.tenant;
+    let company = event.session.bot.company;
+
+    var templateJSON = {};
+    if (event.message.outmessage) {
+        if (event.message.outmessage.type !== "card") {
+            console.log("Not a card."); return;
+        }
+    }
+
+    let cardId = event.message.outmessage.message;
+    console.log("Card ID : "+ cardId);
+    //Call to ViewService and get the Common JSON.
+    ViewService.GetCardByID(tenant, company, cardId).then(function (data) {
+        let CommonJSON = data;
+        //Pass it to Template service and get the specific facebook template.
+
+        console.log(CommonJSON);
+
+
+
+
+        request({
+            //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
+            url: 'https://slack.com/api/chat.postMessage',
+
+            method: 'POST',
+            headers :{
+                'Content-Type':'application/x-www-form-urlencoded'
+            },
+            form: {
+                token :SLACKbotToken,
+                channel :event.to.id,
+                text: event.message.outmessage.message,
+                //attachments :JSON.stringify(obj)
+            }
+        }, function (error, response) {
+
+            if (error) {
+                console.log('Error sending message: ', error);
+            } else if (response.body.error) {
+                console.log('Error: ', response.body.error);
+            }else{
+                console.log(response.body);
+            }
+
+        });
+    }).catch(function (error) {
+        console.log(error);
+    });
 };
 
 module.exports.SendAction = function (event) {
@@ -272,47 +335,7 @@ module.exports.SendQuickReply = function (event) {
     });
 };
 
-module.exports.SendCard = function (event) {
-    let SLACKbotToken = GETSLACKbotToken(event);
-    if (SLACKbotToken === "N/A"){
-        return;
-    }
 
-    let sender = event.from.id;
-    let tenant = event.session.bot.tenant;
-    let company = event.session.bot.company;
-
-    var templateJSON = {};
-    if (event.message.outmessage) {
-        if (event.message.outmessage.type !== "card") {
-            console.log("Not a card."); return;
-        }
-    }
-
-    let cardId = event.message.outmessage.message;
-    console.log("Card ID : "+ cardId);
-    //Call to ViewService and get the Common JSON.
-    ViewService.GetCardByID(tenant, company, cardId).then(function (data) {
-        let CommonJSON = data;
-        //Pass it to Template service and get the specific facebook template.
-        let template = new TemplateService.FacebookTemplate(sender, "card", CommonJSON);
-        templateJSON = template.Generate();
-        request({
-            url: 'https://graph.facebook.com/v2.6/me/messages',
-            
-            method: 'POST',
-            json: templateJSON
-        }, function (error, response) {
-            if (error) {
-                console.log('Error sending card : ', error);
-            } else if (response.body.error) {
-                console.log('Error: ', response.body.error);
-            }
-        });
-    }).catch(function (error) {
-        console.log(error);
-    });
-};
 
 module.exports.SendList = function (event) {
     let SLACKbotToken = GETSLACKbotToken(event);
