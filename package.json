@@ -1,0 +1,32 @@
+{
+  "name": "dbf-connector-facebook",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DuoSoftware/DBF-Connector-Facebook.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DuoSoftware/DBF-Connector-Facebook/issues"
+  },
+  "homepage": "https://github.com/DuoSoftware/DBF-Connector-Facebook#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "config": "^1.28.1",
+    "dvp-common-lite": "^1.0.0",
+    "extend": "^3.0.1",
+    "request": "^2.83.0",
+    "restify": "^6.3.4",
+    "restify-cors-middleware": "^1.1.0",
+    "restify-jwt": "^0.4.0",
+    "stringformat": "0.0.5",
+    "validator": "^9.2.0"
+  }
+}
