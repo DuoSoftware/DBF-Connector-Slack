@@ -174,6 +174,7 @@ module.exports.SendCard = function (event) {
         }
     }
 
+
     let cardId = event.message.outmessage.message;
     console.log("Card ID : "+ cardId);
     //Call to ViewService and get the Common JSON.
@@ -181,8 +182,32 @@ module.exports.SendCard = function (event) {
         let CommonJSON = data;
         //Pass it to Template service and get the specific facebook template.
 
-        console.log(CommonJSON);
 
+
+
+
+        let actionsArr = [];
+
+
+        for (let value of CommonJSON.items) {
+            //console.log(value);
+
+            let action = {
+                "name": value.title,
+                "text": value.title,
+                "style": "danger",
+                "type": "button",
+                "value": value.sub_title,
+                "confirm": {
+                    "title": "Are you sure?",
+                    "text": "Are you sure?",
+                    "ok_text": "Yes",
+                    "dismiss_text": "No"
+                }
+            };
+
+            actionsArr.push(action);
+        }
 
 
 
@@ -197,10 +222,21 @@ module.exports.SendCard = function (event) {
             form: {
                 token :SLACKbotToken,
                 channel :event.to.id,
-                text: event.message.outmessage.message,
-                //attachments :JSON.stringify(obj)
+                //text: event.message.outmessage.message,
+                attachments :JSON.stringify([
+                    {
+                        "text": "",
+                        "fallback": "",
+                        "callback_id": sender,
+                        "color": "#3AA3E3",
+                        "attachment_type": "default",
+                        "actions": actionsArr
+                    }
+                ])
             }
         }, function (error, response) {
+
+
 
             if (error) {
                 console.log('Error sending message: ', error);
