@@ -85,48 +85,6 @@ module.exports.SendMessage = function (event) {
 
     }
 
-    //console.log(SLACKbotToken);
-    //console.log(event.message.outmessage.message);
-    //console.log(event.to.id);
-
-    /*let obj = [
-        {
-            "text": "Choose a game to play",
-            "fallback": "You are unable to choose a game",
-            "callback_id": "wopr_game",
-            "color": "#3AA3E3",
-            "attachment_type": "default",
-            "actions": [
-                {
-                    "name": "game",
-                    "text": "dwdsd",
-                    "type": "button",
-                    "value": "chess"
-                },
-                {
-                    "name": "game",
-                    "text": "Falken's Maze",
-                    "type": "button",
-                    "value": "maze"
-                },
-                {
-                    "name": "game",
-                    "text": "Thermonuclear War",
-                    "style": "danger",
-                    "type": "button",
-                    "value": "war",
-                    "confirm": {
-                        "title": "Are you sure?",
-                        "text": "Wouldn't you prefer a good game of chess?",
-                        "ok_text": "Yes",
-                        "dismiss_text": "No"
-                    }
-                }
-            ]
-        }
-    ];*/
-
-
 
     request({
         //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
@@ -243,7 +201,7 @@ module.exports.SendCard = function (event) {
             } else if (response.body.error) {
                 console.log('Error: ', response.body.error);
             }else{
-                console.log(response.body);
+                //console.log(response.body);
             }
 
         });
@@ -338,37 +296,60 @@ module.exports.SendQuickReply = function (event) {
     let tenant = event.session.bot.tenant;
     let company = event.session.bot.company;
 
-    var templateJSON = {};
-    if (event.message.outmessage) {
-        if (event.message.outmessage.type != "quickreply") {
-            console.log("Not a card.");
-            return;
-        }
+
+
+
+    if (event.message.outmessage && event.message.outmessage.type === "quickreply") {
+
+        let text = "error";
+
+        let quickreplyid = event.message.outmessage.message;
+        ViewService.GetQuickReplyByID(tenant, company, quickreplyid).then(function (data) {
+
+
+            console.log("***********************************************************************************");
+            console.log(data);
+            console.log("***********************************************************************************");
+
+            if (data.text !== "") {
+                text = data.text;
+            } else {
+                text = "That I can't answer. Anything else you want to know? :)";
+            }
+
+
+            request({
+                //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
+                url: 'https://slack.com/api/chat.postMessage',
+
+                method: 'POST',
+                headers :{
+                    'Content-Type':'application/x-www-form-urlencoded'
+                },
+                form: {
+                    token :SLACKbotToken,
+                    channel :event.to.id,
+                    text: text,
+                    //attachments :JSON.stringify(obj)
+                }
+            }, function (error, response) {
+
+                if (error) {
+                    console.log('Error sending message: ', error);
+                } else if (response.body.error) {
+                    console.log('Error: ', response.body.error);
+                }else{
+                    console.log(response.body);
+                }
+
+            });
+
+        });
+
     }
 
-    let quickreplyid = event.message.outmessage.message;
-    console.log("QuickReply ID : "+ quickreplyid);
-    //Call to ViewService and get the Common JSON.
-    ViewService.GetQuickReplyByID(tenant, company, quickreplyid).then(function (data) {
-        let CommonJSON = data;
-        //Pass it to Template service and get the specific facebook template.
-        let template = new TemplateService.FacebookTemplate(sender, "quickreply", CommonJSON);
-        templateJSON = template.Generate();
-        request({
-            url: 'https://graph.facebook.com/v2.6/me/messages',
-            
-            method: 'POST',
-            json: templateJSON
-        }, function (error, response) {
-            if (error) {
-                console.log('Error sending card : ', error);
-            } else if (response.body.error) {
-                console.log('Error: ', response.body.error);
-            }
-        });
-    }).catch(function (error) {
-        console.log(error);
-    });
+
+
 };
 
 

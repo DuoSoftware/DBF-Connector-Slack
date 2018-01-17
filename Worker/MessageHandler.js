@@ -4,7 +4,7 @@ const Payload = require('../Common/Payload');
 var validator = require('validator');
 var format = require("stringformat");
 const logger = require('dvp-common-lite/LogHandler/CommonLogHandler.js').logger;
-var dispatcher = require('../Utility/Dispatcher')
+var dispatcher = require('../Utility/Dispatcher');
 
 
 module.exports.Validate = function (req, res, next) {
@@ -13,13 +13,42 @@ module.exports.Validate = function (req, res, next) {
         res.send(200,req.body.challenge,{'Content-type' : 'text/plain'});
     }
 
-    console.log(req.body.event);
+    //console.log(req.body);
 
     if(req.body.event && req.body.event.subtype !== 'bot_message')
     HandleMessage(req, function (found) {
 
     });
+    else if(req.body.hasOwnProperty('payload')){
+        let payload = JSON.parse(req.body.payload);
+        //console.log(payload);
+
+        if(payload.type && payload.type === 'interactive_message'){
+
+            let modObj ={};
+            modObj.body ={};
+            modObj.params = req.params;
+            modObj.body.event ={
+                type :'message',
+                user: payload.user.id,
+                channel :  payload.channel.id,
+                text: payload.actions[0].name
+
+            };
+
+            //console.log(modObj);
+
+            HandleMessage(modObj, function (found) {
+
+            });
+
+
+        }
+    }
+
     res.send(200);
+
+
 
 
 
@@ -68,9 +97,10 @@ function HandleMessage (req, res) {
     const company = req.params.company;
     const tenant = req.params.tenant;
 
+
+
+
     if (event && event.type === 'message') {
-
-
 
 
         /*if (event.postback) {
