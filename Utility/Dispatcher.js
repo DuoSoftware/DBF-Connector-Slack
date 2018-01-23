@@ -11,9 +11,9 @@ module.exports.InvokeDispatch = function(company, tenant,payload){
         if((config.Services && config.Services.dispatchServiceHost && config.Services.dispatchServicePort && config.Services.dispatchServiceVersion)) {
 
 
-            var dispatchURL = `http://${config.Services.dispatchServiceHost}/DBF/API/${config.Services.dispatchServiceVersion}/Dispatcher/Invoke/`;
+            var dispatchURL = `https://${config.Services.dispatchServiceHost}/DBF/API/${config.Services.dispatchServiceVersion}/Dispatcher/Invoke/`;
             if (validator.isIP(config.Services.dispatchServiceHost))
-                dispatchURL = `http://${config.Services.dispatchServiceHost}:${config.Services.dispatchServicePort}/DBF/API/${config.Services.dispatchServiceVersion}/Dispatcher/Invoke/`;
+                dispatchURL = `https://${config.Services.dispatchServiceHost}:${config.Services.dispatchServicePort}/DBF/API/${config.Services.dispatchServiceVersion}/Dispatcher/Invoke/`;
 
             console.log(dispatchURL)
 

@@ -10,15 +10,21 @@ var dispatcher = require('../Utility/Dispatcher');
 module.exports.Validate = function (req, res, next) {
 
     if(req.body.challenge){
+        console.log("Challenge Accepted");
         res.send(200,req.body.challenge,{'Content-type' : 'text/plain'});
+        next();
     }
 
     //console.log(req.body);
 
-    if(req.body.event && req.body.event.subtype !== 'bot_message')
-    HandleMessage(req, function (found) {
+    if(req.body.event && req.body.event.subtype !== 'bot_message'){
+        HandleMessage(req, function (found) {
 
-    });
+        });
+
+        res.send(200);
+    }
+
     else if(req.body.hasOwnProperty('payload')){
         let payload = JSON.parse(req.body.payload);
         //console.log(payload);
@@ -44,9 +50,10 @@ module.exports.Validate = function (req, res, next) {
 
 
         }
+        res.send(200);
     }
 
-    res.send(200);
+
 
 
 

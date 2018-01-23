@@ -41,7 +41,14 @@ server.use(restify.plugins.queryParser({
 server.use(restify.plugins.bodyParser({
     mapParams: true
 }));
-
+server.on('uncaughtException', function (req, res, route, err) {
+    // logging here, maybe?
+    res.send(err.code || 500, {
+        code: err.code || 500,
+        error_description: err.status || err.message || err.description || 'Internal Server Error',
+        req_body: req.params
+    });
+});
 
 server.listen(port, () => {
     console.log('%s listening at %s', server.name, server.url);
