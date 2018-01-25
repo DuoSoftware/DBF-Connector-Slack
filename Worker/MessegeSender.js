@@ -3,6 +3,7 @@ const config = require('config');
 const messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 const TemplateService = require('../Templates/Template.js');
 const ViewService = require('../Utility/ViewService.js');
+const async = require('async');
 
 
 module.exports.GetProfile = function (req, res) {
@@ -134,7 +135,7 @@ module.exports.SendCard = function (event) {
 
 
     let cardId = event.message.outmessage.message;
-    console.log("Card ID : "+ cardId);
+    //console.log("Card ID : "+ cardId);
     //Call to ViewService and get the Common JSON.
     ViewService.GetCardByID(tenant, company, cardId).then(function (data) {
         let CommonJSON = data;
@@ -142,31 +143,75 @@ module.exports.SendCard = function (event) {
 
 
 
-
+        //console.log(CommonJSON.items)
 
         let actionsArr = [];
+
+        let count = 0;
 
 
         for (let value of CommonJSON.items) {
             //console.log(value);
+                count++;
+                async.waterfall([
+                    function(callback) {
 
-            let action = {
-                "name": value.title,
-                "text": value.title,
-                "style": "danger",
-                "type": "button",
-                "value": value.sub_title,
-                "confirm": {
-                    "title": "Are you sure?",
-                    "text": "Are you sure?",
-                    "ok_text": "Yes",
-                    "dismiss_text": "No"
+                        let image = {
+                            "title": value.sub_title,
+                            "author_name": value.title,
+                            "author_icon": "",
+                            "image_url": value.image_url
+                        };
+
+                        callback(null, image);
+                    },
+                    function(image, callback) {
+
+                        actionsArr.push(image);
+                        callback(null);
+                    },
+                    function(callback) {
+
+                        let action = {
+                            "name": value.title,
+                            "text": value.title,
+                            "style": "danger",
+                            "type": "button",
+                            "value": value.sub_title,
+                            "confirm": {
+                                "title": "Are you sure?",
+                                "text": "Are you sure?",
+                                "ok_text": "Yes",
+                                "dismiss_text": "No"
+                            }
+                        };
+
+                        let obj = {
+                            "text": value.title,
+                            "fallback": "",
+                            "callback_id": sender,
+                            "color": "#3AA3E3",
+                            "attachment_type": "default",
+                            "actions": [action]
+                        };
+
+                        actionsArr.push(obj);
+                        callback(null, 'done');
+                    }
+                ], function (err, result) {
+                    // result now equals 'done'
+
+
+                });
+
+
+                if(count>=50){
+                    break;
                 }
-            };
 
-            actionsArr.push(action);
+
+
         }
-
 
 
         request({
@@ -180,20 +225,11 @@ module.exports.SendCard = function (event) {
             form: {
                 token :SLACKbotToken,
                 channel :event.to.id,
-                //text: event.message.outmessage.message,
-                attachments :JSON.stringify([
-                    {
-                        "text": "",
-                        "fallback": "",
-                        "callback_id": sender,
-                        "color": "#3AA3E3",
-                        "attachment_type": "default",
-                        "actions": actionsArr
-                    }
-                ])
-            }
-        }, function (error, response) {
+                attachments : JSON.stringify(actionsArr)
 
+            }
+
+        }, function (error, response) {
 
 
             if (error) {
@@ -286,7 +322,12 @@ module.exports.SendAttachment = function (event) {
     });
 };
 
-module.exports.SendQuickReply = function (event) {
+module.exports.SendQuickReply = function (event, slackData) {
+
+
+
+
+
     let SLACKbotToken = GETSLACKbotToken(event);
     if (SLACKbotToken === "N/A"){
         return;
@@ -299,6 +340,8 @@ module.exports.SendQuickReply = function (event) {
 
 
 
+
+
     if (event.message.outmessage && event.message.outmessage.type === "quickreply") {
 
         let text = "error";
@@ -307,9 +350,29 @@ module.exports.SendQuickReply = function (event) {
         ViewService.GetQuickReplyByID(tenant, company, quickreplyid).then(function (data) {
 
 
-            console.log("***********************************************************************************");
-            console.log(data);
-            console.log("***********************************************************************************");
+            let actionsArr = [];
+
+            //console.log(data.items);
+            for (let value of data.items) {
+
+
+                let action = {
+                    "name": value.title,
+                    "text": value.title,
+                    "style": "default",
+                    "type": "button",
+                    "value": value.payload,
+                    /*"confirm": {
+                        "title": "Are you sure?",
+                        "text": "Are you sure?",
+                        "ok_text": "Yes",
+                        "dismiss_text": "No"
+                    }*/
+                };
+
+                actionsArr.push(action);
+            }
+
 
             if (data.text !== "") {
                 text = data.text;
@@ -317,6 +380,7 @@ module.exports.SendQuickReply = function (event) {
                 text = "That I can't answer. Anything else you want to know? :)";
             }
 
+            //console.log(JSON.stringify({attachments :actionsArr}));
 
             request({
                 //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
@@ -329,8 +393,15 @@ module.exports.SendQuickReply = function (event) {
                 form: {
                     token :SLACKbotToken,
                     channel :event.to.id,
-                    text: text,
-                    //attachments :JSON.stringify(obj)
+                    //text: slackData.text,
+                    attachments: JSON.stringify([
+                        {
+                            color: "good",
+                            text: `*${slackData.text}*`
+
+                        }
+                    ])
+
                 }
             }, function (error, response) {
 
@@ -339,10 +410,47 @@ module.exports.SendQuickReply = function (event) {
                 } else if (response.body.error) {
                     console.log('Error: ', response.body.error);
                 }else{
-                    console.log(response.body);
+
+                    request({
+                        //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
+                        url: 'https://slack.com/api/chat.postMessage',
+
+                        method: 'POST',
+                        headers :{
+                            'Content-Type':'application/x-www-form-urlencoded'
+                        },
+                        form: {
+                            token :SLACKbotToken,
+                            channel :event.to.id,
+                            text: text,
+                            attachments :JSON.stringify([
+                                {
+                                    "text": "",
+                                    "fallback": "",
+                                    "callback_id": sender,
+                                    "attachment_type": "default",
+                                    "replace_original": true,
+                                    "actions": actionsArr
+                                }
+                            ])
+                        }
+                    }, function (error, response) {
+
+                        if (error) {
+                            console.log('Error sending message: ', error);
+                        } else if (response.body.error) {
+                            console.log('Error: ', response.body.error);
+                        }else{
+                            console.log(response.body);
+                        }
+
+                    });
                 }
 
             });
+
+
+
 
         });
 

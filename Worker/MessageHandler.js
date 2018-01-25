@@ -15,7 +15,7 @@ module.exports.Validate = function (req, res, next) {
         next();
     }
 
-    //console.log(req.body);
+    //console.log(JSON.stringify(req.body));
 
     if(req.body.event && req.body.event.subtype !== 'bot_message'){
         HandleMessage(req, function (found) {
@@ -38,7 +38,8 @@ module.exports.Validate = function (req, res, next) {
                 type :'message',
                 user: payload.user.id,
                 channel :  payload.channel.id,
-                text: payload.actions[0].name
+                text: payload.actions[0].value,
+                response_url : payload.response_url
 
             };
 
@@ -50,6 +51,9 @@ module.exports.Validate = function (req, res, next) {
 
 
         }
+        res.send(200);
+    }
+    else{
         res.send(200);
     }
 
@@ -97,7 +101,7 @@ let GetEventData = (event) => {
 function HandleMessage (req, res) {
 
     //commenting this line since we are getting message did read lines as well
-    ////console.log(JSON.stringify(req.body));
+    //console.log(JSON.stringify(req.body));
 
     let event = req.body.event;
 
@@ -119,7 +123,6 @@ function HandleMessage (req, res) {
 
         if (event.text) {
             console.log("Incoming Message : " + new Date().toLocaleString());
-            //console.log(JSON.stringify(req.body));
 
 
             //Create payload for dispatcher
@@ -150,7 +153,7 @@ function HandleMessage (req, res) {
 
             dispatcher.InvokeDispatch(company, tenant, payload).then(function (data) {
                 console.log("Payload from Dispatcher : ");
-                console.log(JSON.stringify(data));
+                //console.log(JSON.stringify(data));
                 //console.log( data.session.bot.channel_slack);
                 console.log(data.message.outmessage)
                 if (data && data.message && data.message.outmessage) {
@@ -166,7 +169,7 @@ function HandleMessage (req, res) {
                             SendMessenger.SendAttachment(data);
                             break;
                         case "quickreply":
-                            SendMessenger.SendQuickReply(data);
+                            SendMessenger.SendQuickReply(data,event);
                             break;
                         case "card":
                             SendMessenger.SendCard(data);

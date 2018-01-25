@@ -29,7 +29,7 @@ module.exports.InvokeDispatch = function(company, tenant,payload){
 
                 try {
 
-                    if (!_error && _response && _response.statusCode == 200&& _response.body) {
+                    if (!_error && _response && _response.statusCode === 200&& _response.body) {
 
                         resolve( _response.body);
 
