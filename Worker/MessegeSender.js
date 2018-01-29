@@ -4,7 +4,7 @@ const messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientM
 const TemplateService = require('../Templates/Template.js');
 const ViewService = require('../Utility/ViewService.js');
 const async = require('async');
-
+const fs = require('fs');
 
 module.exports.GetProfile = function (req, res) {
 
@@ -20,7 +20,7 @@ module.exports.GetProfile = function (req, res) {
     }
 
     request({
-        url: 'https://slack.com/api/users.info?token='+SlackApiToken+'&user='+sender,
+        url: `https://slack.com/api/users.info?token=${SlackApiToken}&user=${sender}`,
         method: 'GET',
         headers :{
             'Content-Type':'application/x-www-form-urlencoded'
@@ -279,47 +279,53 @@ module.exports.SendAttachment = function (event) {
     }
 
     let sender = event.from.id;
-    let type = "image";
-    var payload = {};
-    if (event.message.outmessage && event.message.outmessage.type === "attachment") {
+    let tenant = event.session.bot.tenant;
+    let company = event.session.bot.company;
 
-        if (event.message.outmessage.message) {
+    let attachmentid = event.message.outmessage.message;
 
-            if (event.message.outmessage.message.type) {
-                type = event.message.outmessage.message.type;
+    ViewService.GetAttachmentByID(tenant, company, attachmentid).then(function (data) {
+
+        //let name  = (data.payload.url.split('/')).slice(-1)[0];
+
+        request({
+            //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
+            url: 'https://slack.com/api/files.upload',
+
+            method: 'POST',
+            headers :{
+                'Content-Type':'application/x-www-form-urlencoded'
+            },
+            form: {
+                token :SLACKbotToken,
+                channel :event.to.id,
+                title: data.title,
+                filename: data.title,
+                filetype: "auto",
+                file : request(data.payload.url).pipe(fs.createWriteStream(data.title))
+
+                //attachments :JSON.stringify(obj)
             }
+        }, function (error, response) {
 
-            if (event.message.outmessage.message.url) {
-                payload.url = event.message.outmessage.message.url;
-                payload.is_reusable = true;
+            if (error) {
+                console.log('Error sending message: ', error);
+            } else if (response.body.error) {
+                console.log('Error: ', response.body.error);
             }else{
-                //define a default attachment.
-                payload.url = "http://spadeworx.com/wp-content/uploads/2016/07/Artificial_Intel_Banner.jpg" //get this from config later.
+                console.log(response.body);
             }
-        }
-    }
 
+        });
 
-    request({
-        url: 'https://graph.facebook.com/v2.6/me/messages',
-        
-        method: 'POST',
-        json: {
-            recipient: {id: sender},
-            message: {
-                attachment: {
-                    type: type,
-                    payload: payload
-                }
-            }
-        }
-    }, function (error, response) {
-        if (error) {
-            console.log('Error sending attachment : ', error);
-        } else if (response.body.error) {
-            console.log('Error: ', response.body.error);
-        }
     });
+
+
+
+
+
+
+
 };
 
 module.exports.SendQuickReply = function (event, slackData) {
@@ -383,7 +389,6 @@ module.exports.SendQuickReply = function (event, slackData) {
             //console.log(JSON.stringify({attachments :actionsArr}));
 
             request({
-                //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
                 url: 'https://slack.com/api/chat.postMessage',
 
                 method: 'POST',
@@ -412,7 +417,6 @@ module.exports.SendQuickReply = function (event, slackData) {
                 }else{
 
                     request({
-                        //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
                         url: 'https://slack.com/api/chat.postMessage',
 
                         method: 'POST',
