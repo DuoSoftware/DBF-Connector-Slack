@@ -4,6 +4,7 @@ const messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientM
 const TemplateService = require('../Templates/Template.js');
 const ViewService = require('../Utility/ViewService.js');
 const async = require('async');
+const FormData = require('form-data');
 const fs = require('fs');
 
 module.exports.GetProfile = function (req, res) {
@@ -152,62 +153,62 @@ module.exports.SendCard = function (event) {
 
         for (let value of CommonJSON.items) {
             //console.log(value);
-                count++;
-                async.waterfall([
-                    function(callback) {
+            count++;
+            async.waterfall([
+                function(callback) {
 
-                        let image = {
-                            "title": value.sub_title,
-                            "author_name": value.title,
-                            "author_icon": "",
-                            "image_url": value.image_url
-                        };
+                    let image = {
+                        "title": value.sub_title,
+                        "author_name": value.title,
+                        "author_icon": "",
+                        "image_url": value.image_url
+                    };
 
-                        callback(null, image);
-                    },
-                    function(image, callback) {
+                    callback(null, image);
+                },
+                function(image, callback) {
 
-                        actionsArr.push(image);
-                        callback(null);
-                    },
-                    function(callback) {
+                    actionsArr.push(image);
+                    callback(null);
+                },
+                function(callback) {
 
-                        let action = {
-                            "name": value.title,
-                            "text": value.title,
-                            "style": "danger",
-                            "type": "button",
-                            "value": value.sub_title,
-                            "confirm": {
-                                "title": "Are you sure?",
-                                "text": "Are you sure?",
-                                "ok_text": "Yes",
-                                "dismiss_text": "No"
-                            }
-                        };
+                    let action = {
+                        "name": value.title,
+                        "text": value.title,
+                        "style": "danger",
+                        "type": "button",
+                        "value": value.sub_title,
+                        "confirm": {
+                            "title": "Are you sure?",
+                            "text": "Are you sure?",
+                            "ok_text": "Yes",
+                            "dismiss_text": "No"
+                        }
+                    };
 
-                        let obj = {
-                            "text": value.title,
-                            "fallback": "",
-                            "callback_id": sender,
-                            "color": "#3AA3E3",
-                            "attachment_type": "default",
-                            "actions": [action]
-                        };
+                    let obj = {
+                        "text": value.title,
+                        "fallback": "",
+                        "callback_id": sender,
+                        "color": "#3AA3E3",
+                        "attachment_type": "default",
+                        "actions": [action]
+                    };
 
-                        actionsArr.push(obj);
-                        callback(null, 'done');
-                    }
-                ], function (err, result) {
-                    // result now equals 'done'
-
-
-                });
-
-
-                if(count>=50){
-                    break;
+                    actionsArr.push(obj);
+                    callback(null, 'done');
                 }
+            ], function (err, result) {
+                // result now equals 'done'
+
+
+            });
+
+
+            if(count>=50){
+                break;
+            }
 
 
 
@@ -256,7 +257,7 @@ module.exports.SendAction = function (event) {
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
-        
+
         method: 'POST',
         json: {
             recipient: {id: sender},
@@ -284,39 +285,33 @@ module.exports.SendAttachment = function (event) {
 
     let attachmentid = event.message.outmessage.message;
 
-    ViewService.GetAttachmentByID(tenant, company, attachmentid).then(function (data) {
+    //ViewService.GetAttachmentByID(tenant, company, attachmentid).then(function (data) {
+    ViewService.GetAttachmentByID(tenant, company, '5a544d9ff1c26e206c369493').then(function (data) {
 
-        //let name  = (data.payload.url.split('/')).slice(-1)[0];
+        let name  = (data.payload.url.split('/')).slice(-1)[0];
 
-        request({
-            //url: 'https://slack.com/api/chat.postMessage?token='+SLACKbotToken+'&channel='+event.to.id+'&text='+event.message.outmessage.message,
-            url: 'https://slack.com/api/files.upload',
 
-            method: 'POST',
-            headers :{
-                'Content-Type':'application/x-www-form-urlencoded'
-            },
-            form: {
-                token :SLACKbotToken,
-                channel :event.to.id,
-                title: data.title,
-                filename: data.title,
-                filetype: "auto",
-                file : request(data.payload.url).pipe(fs.createWriteStream(data.title))
 
-                //attachments :JSON.stringify(obj)
-            }
-        }, function (error, response) {
+        let form = new FormData();
 
-            if (error) {
-                console.log('Error sending message: ', error);
-            } else if (response.body.error) {
-                console.log('Error: ', response.body.error);
-            }else{
-                console.log(response.body);
-            }
+        form.append('token', SLACKbotToken);
+        form.append('channels', event.to.id);
+        form.append('as_user', 'false');
+        form.append('title', name);
+        form.append('filename', name);
+        form.append('filetype', 'auto');
+        //form.append('file', response.body);
+        form.append('file',  request(data.payload.url));
 
+        form.submit('https://slack.com/api/files.upload', function(err, res) {
+            // res – response object (http.IncomingMessage)  //
+            console.log(res.statusCode);
+            res.resume();
         });
+
+
+
+
 
     });
 
@@ -327,6 +322,8 @@ module.exports.SendAttachment = function (event) {
 
 
 };
+
+
 
 module.exports.SendQuickReply = function (event, slackData) {
 
@@ -369,11 +366,11 @@ module.exports.SendQuickReply = function (event, slackData) {
                     "type": "button",
                     "value": value.payload,
                     /*"confirm": {
-                        "title": "Are you sure?",
-                        "text": "Are you sure?",
-                        "ok_text": "Yes",
-                        "dismiss_text": "No"
-                    }*/
+                     "title": "Are you sure?",
+                     "text": "Are you sure?",
+                     "ok_text": "Yes",
+                     "dismiss_text": "No"
+                     }*/
                 };
 
                 actionsArr.push(action);
@@ -483,7 +480,7 @@ module.exports.SendList = function (event) {
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
-        
+
         method: 'POST',
         json: {
             messaging_type: "RESPONSE",
@@ -518,7 +515,7 @@ module.exports.SendButton = function (event) {
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
-        
+
         method: 'POST',
         json: {
             messaging_type: "RESPONSE",
@@ -553,7 +550,7 @@ module.exports.SendMedia = function (event) {
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
-        
+
         method: 'POST',
         json: {
             messaging_type: "RESPONSE",
@@ -588,7 +585,7 @@ module.exports.SendReciept = function (event) {
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messages',
-        
+
         method: 'POST',
         json: {
             messaging_type: "RESPONSE",
@@ -623,7 +620,7 @@ module.exports.CreatePersistMenu = function (event) {
 
     request({
         url: 'https://graph.facebook.com/v2.6/me/messenger_profile',
-        
+
         method: 'POST',
         json: payload
     }, function (error, response) {

@@ -15,9 +15,9 @@ module.exports.Validate = function (req, res, next) {
         next();
     }
 
-    //console.log(JSON.stringify(req.body));
 
-    if(req.body.event && req.body.event.subtype !== 'bot_message'){
+    //TODO : Find mechanism to check 'file_share' type for bot users only when file share is expected of user like 'bot_message' type
+     if(req.body.event && req.body.event.subtype !== 'bot_message' && req.body.event.subtype !== 'file_share' ){
         HandleMessage(req, function (found) {
 
         });
@@ -155,7 +155,7 @@ function HandleMessage (req, res) {
                 console.log("Payload from Dispatcher : ");
                 //console.log(JSON.stringify(data));
                 //console.log( data.session.bot.channel_slack);
-                console.log(data.message.outmessage)
+                console.log(data.message.outmessage);
                 if (data && data.message && data.message.outmessage) {
 
                     switch (data.message.outmessage.type) {
