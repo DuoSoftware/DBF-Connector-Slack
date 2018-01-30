@@ -285,8 +285,8 @@ module.exports.SendAttachment = function (event) {
 
     let attachmentid = event.message.outmessage.message;
 
-    //ViewService.GetAttachmentByID(tenant, company, attachmentid).then(function (data) {
-    ViewService.GetAttachmentByID(tenant, company, '5a544d9ff1c26e206c369493').then(function (data) {
+    ViewService.GetAttachmentByID(tenant, company, attachmentid).then(function (data) {
+    //ViewService.GetAttachmentByID(tenant, company, '5a544d9ff1c26e206c369493').then(function (data) {
 
         let name  = (data.payload.url.split('/')).slice(-1)[0];
 
