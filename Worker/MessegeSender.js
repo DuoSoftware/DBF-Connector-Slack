@@ -639,10 +639,10 @@ let GETSLACKbotToken = (data) => {
     let SLACKbotToken = "";
     if (data.session){
         if (data.session.bot){
-            if (data.session.bot.channel_facebook){
+            if (data.session.bot.channel_slack){
                 SLACKbotToken = data.session.bot.channel_slack.bot_token;
             }else{
-                console.log("Error getting SLACK token : channel_facebook not found.");
+                console.log("Error getting SLACK token : channel_slack not found.");
                 SLACKbotToken = "N/A";
             }
         }else{
