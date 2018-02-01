@@ -1,7 +1,7 @@
 const request = require('request');
 const config = require('config');
 const messageFormatter = require('dvp-common-lite/CommonMessageGenerator/ClientMessageJsonFormatter.js');
-const TemplateService = require('../Templates/Template.js');
+//const TemplateService = require('../Templates/Template.js');
 const ViewService = require('../Utility/ViewService.js');
 const async = require('async');
 const FormData = require('form-data');
@@ -76,7 +76,7 @@ module.exports.SendMessage = function (event) {
     let tenant = event.session.bot.tenant;
     let company = event.session.bot.company;
 
-    var text = "error";
+    let text = "error";
     if (event.message.outmessage && event.message.outmessage.type === "text") {
         if (event.message.outmessage.message !== "") {
             text = event.message.outmessage.message;
@@ -127,7 +127,7 @@ module.exports.SendCard = function (event) {
     let tenant = event.session.bot.tenant;
     let company = event.session.bot.company;
 
-    var templateJSON = {};
+    let templateJSON = {};
     if (event.message.outmessage) {
         if (event.message.outmessage.type !== "card") {
             console.log("Not a card."); return;
@@ -473,7 +473,7 @@ module.exports.SendList = function (event) {
 
     let payload = [];
     if (event.message.outmessage) {
-        if (event.message.outmessage.type == "list") {
+        if (event.message.outmessage.type === "list") {
             payload = event.message.outmessage.message;
         }
     }
@@ -508,7 +508,7 @@ module.exports.SendButton = function (event) {
 
     let payload = [];
     if (event.message.outmessage) {
-        if (event.message.outmessage.type == "button") {
+        if (event.message.outmessage.type === "button") {
             payload = event.message.outmessage.message;
         }
     }
@@ -543,7 +543,7 @@ module.exports.SendMedia = function (event) {
 
     let payload = [];
     if (event.message.outmessage) {
-        if (event.message.outmessage.type == "media") {
+        if (event.message.outmessage.type === "media") {
             payload = event.message.outmessage.message;
         }
     }
@@ -578,7 +578,7 @@ module.exports.SendReciept = function (event) {
 
     let payload = [];
     if (event.message.outmessage) {
-        if (event.message.outmessage.type == "reciept") {
+        if (event.message.outmessage.type === "reciept") {
             payload = event.message.outmessage.message;
         }
     }
@@ -613,7 +613,7 @@ module.exports.CreatePersistMenu = function (event) {
 
     let payload = [];
     if (event.message.outmessage) {
-        if (event.message.outmessage.type == "persistmenu") {
+        if (event.message.outmessage.type === "persistmenu") {
             payload = event.message.outmessage.message;
         }
     }
@@ -642,15 +642,15 @@ let GETSLACKbotToken = (data) => {
             if (data.session.bot.channel_facebook){
                 SLACKbotToken = data.session.bot.channel_slack.bot_token;
             }else{
-                console.log("Error getting SLACK token : channel_facebook not found.")
+                console.log("Error getting SLACK token : channel_facebook not found.");
                 SLACKbotToken = "N/A";
             }
         }else{
-            console.log("Error getting SLACK token : bot not found.")
+            console.log("Error getting SLACK token : bot not found.");
             SLACKbotToken = "N/A";
         }
     }else{
-        console.log("Error getting SLACK token : session not found.")
+        console.log("Error getting SLACK token : session not found.");
         SLACKbotToken = "N/A";
     }
 
