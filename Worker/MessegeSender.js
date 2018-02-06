@@ -498,75 +498,7 @@ module.exports.SendList = function (event) {
 
 };
 
-module.exports.SendButton = function (event) {
-    let SLACKbotToken = GETSLACKbotToken(event);
-    if (SLACKbotToken === "N/A"){
-        return;
-    }
 
-    let sender = event.from.id;
-
-    let payload = [];
-    if (event.message.outmessage) {
-        if (event.message.outmessage.type === "button") {
-            payload = event.message.outmessage.message;
-        }
-    }
-
-    request({
-        url: 'https://graph.facebook.com/v2.6/me/messages',
-
-        method: 'POST',
-        json: {
-            messaging_type: "RESPONSE",
-            recipient: {id: sender},
-            message: {attachment: {type: "template", payload: payload}}
-        }
-    }, function (error, response) {
-        if (error) {
-            console.log('Error sending button : ', error);
-        } else if (response.body.error) {
-            console.log('Error: ', response.body.error);
-        }
-    });
-
-
-};
-
-module.exports.SendMedia = function (event) {
-    let SLACKbotToken = GETSLACKbotToken(event);
-    if (SLACKbotToken === "N/A"){
-        return;
-    }
-
-    let sender = event.from.id;
-
-    let payload = [];
-    if (event.message.outmessage) {
-        if (event.message.outmessage.type === "media") {
-            payload = event.message.outmessage.message;
-        }
-    }
-
-    request({
-        url: 'https://graph.facebook.com/v2.6/me/messages',
-
-        method: 'POST',
-        json: {
-            messaging_type: "RESPONSE",
-            recipient: {id: sender},
-            message: {attachment: {type: "template", payload: payload}}
-        }
-    }, function (error, response) {
-        if (error) {
-            console.log('Error sending media : ', error);
-        } else if (response.body.error) {
-            console.log('Error: ', response.body.error);
-        }
-    });
-
-
-};
 
 module.exports.SendReciept = function (event) {
     let SLACKbotToken = GETSLACKbotToken(event);
@@ -603,36 +535,6 @@ module.exports.SendReciept = function (event) {
 
 };
 
-module.exports.CreatePersistMenu = function (event) {
-    let SLACKbotToken = GETSLACKbotToken(event);
-    if (SLACKbotToken === "N/A"){
-        return;
-    }
-
-    let sender = event.from.id;
-
-    let payload = [];
-    if (event.message.outmessage) {
-        if (event.message.outmessage.type === "persistmenu") {
-            payload = event.message.outmessage.message;
-        }
-    }
-
-    request({
-        url: 'https://graph.facebook.com/v2.6/me/messenger_profile',
-
-        method: 'POST',
-        json: payload
-    }, function (error, response) {
-        if (error) {
-            console.log('Error creating persist menu : ', error);
-        } else if (response.body.error) {
-            console.log('Error: ', response.body.error);
-        }
-    });
-
-
-};
 
 
 let GETSLACKbotToken = (data) => {
